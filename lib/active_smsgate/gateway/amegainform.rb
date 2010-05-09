@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-require "zlib"
 
 module ActiveSmsgate #:nodoc:
   # «Амега Информ» – http://amegainform.ru/

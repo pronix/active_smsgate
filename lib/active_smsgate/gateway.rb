@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-require 'httparty'
-require 'nokogiri'
 module ActiveSmsgate #:nodoc:
   module Gateway #:nodoc:
     class Gateway
