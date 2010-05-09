@@ -13,6 +13,8 @@ begin
     gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
     gem.add_dependency "nokogiri", ">= 1.4.1"
     gem.add_dependency "httparty", ">= 0.5.2"
+    gem.files = FileList['lib/**/*.rb']
+
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError

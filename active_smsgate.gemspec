@@ -17,19 +17,9 @@ Gem::Specification.new do |s|
      "README.rdoc"
   ]
   s.files = [
-    ".document",
-     ".gitignore",
-     "LICENSE",
-     "README.rdoc",
-     "Rakefile",
-     "VERSION.yml",
-     "active_smsgate.gemspec",
-     "init.rb",
-     "lib/active_smsgate.rb",
+    "lib/active_smsgate.rb",
      "lib/active_smsgate/gateway.rb",
-     "lib/active_smsgate/gateway/amegainform.rb",
-     "test/helper.rb",
-     "test/test_active_smsgate.rb"
+     "lib/active_smsgate/gateways/amegainform.rb"
   ]
   s.homepage = %q{http://github.com/pronix/active_smsgate}
   s.rdoc_options = ["--charset=UTF-8"]

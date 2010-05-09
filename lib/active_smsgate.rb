@@ -8,9 +8,7 @@ require 'digest'
 require "zlib"
 
 require "active_smsgate/gateway"
-Dir.glob(File.join('active_smsgate', "gateway", "*.rb")).each do |gw|
-  require gw
-end
+Dir[File.join(File.dirname(__FILE__), 'active_smsgate','gateways','**','*.rb')].each { |gw| require gw }
 
 module ActiveSmsgate
   VERSION = "0.0"
