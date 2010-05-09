@@ -6,7 +6,6 @@ module ActiveSmsgate #:nodoc:
 
   module Gateway #:nodoc:
     class Amegainform < Gateway
-      VERSION = '0.0'
 
       headers 'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8'
       base_uri 'http://service.amega-inform.ru'

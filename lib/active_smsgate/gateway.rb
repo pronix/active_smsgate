@@ -25,6 +25,12 @@ module ActiveSmsgate #:nodoc:
       # Использовать резервные сервера
       def use_of_backup_server?; @use_of_backup_server  end
 
+      class << self
+        # Список поддерживаемых шлюзов
+        def support_gateways
+          [{:class => 'amegainform',:desc => 'www.amegainform.ru' }]
+        end
+      end
     end
   end
 end
