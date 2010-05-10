@@ -40,14 +40,10 @@ module ActiveSmsgate #:nodoc:
             :overdraft => (doc.at("//balance//OVERDRAFT").inner_html   rescue 0)
           }
         else
-          @response
-        #   raise
+          raise
         end
-
-        # error
-      # rescue
-        # nil
-
+      rescue
+        nil
       end
 
       # Отправка сообщения
@@ -60,18 +56,6 @@ module ActiveSmsgate #:nodoc:
       #            NULL - используется имя отправителя по умолчанию.
 
 
-      # Nokogiri::XML::Builder.new do |xml|
-      #   xml.output do
-      #     xml.result(:sms_group_id => 996) do
-      #       xml.sms(:id => '23234',:smstyoe => 'sendsms', :phone => '333', :sms_res_count => '1' ) {
-      #         xml << "\<![CDATA[Привет]]\>"}
-      #       xml.sms(:id => '999',:smstyoe => 'sendsms', :phone => '22', :sms_res_count => '11' ) {
-      #         xml << "\<![CDATA[---------Привет---------]]\>"}
-      #     end
-      #   end
-      # end
-
-
       # Возвращаемые данные
       # <output>
       # <result sms_group_id="996">
@@ -80,7 +64,7 @@ module ActiveSmsgate #:nodoc:
       # </result>
       # <output>
 
-      def deliver(options = { :sender => nil})
+      def deliver_sms(options = { :sender => nil})
         @options = {
           :action  => "post_sms",
           :message => options[:message],
@@ -93,6 +77,7 @@ module ActiveSmsgate #:nodoc:
           parse(xml)
           { :sms => @sms, :messages => @messages, :errors => @errors}
         else
+          # @response
           raise
         end
       rescue
@@ -133,7 +118,7 @@ module ActiveSmsgate #:nodoc:
       # SMS_DTMF_DIGITS - Что пользователь нажимал в сеансе разговора (для SENDVOICE (в разработке))
       # SMS_CLOSE_TIME - Время завершения работы по сообщению.
 
-      def reply(sms_id)
+      def reply_sms(sms_id)
         @options = { :action => "status", :sendtype => "SENDSMS", :sms_id => sms_id }
         @response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
 
@@ -169,6 +154,7 @@ module ActiveSmsgate #:nodoc:
         @sms = doc.at("//output//result") && doc.at("//output//result").
           children.search("//sms").map {|x|
           _x ={}
+          doc.at("//output//result").each { |v,l| _x[v.downcase.to_sym] = l }
           x.each { |v,l| _x[v.downcase.to_sym] = l }
           _x[:text] = x.inner_html
           _x
