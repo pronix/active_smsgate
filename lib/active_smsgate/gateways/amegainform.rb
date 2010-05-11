@@ -96,6 +96,11 @@ module ActiveSmsgate #:nodoc:
       # * sender  - имя отправителя, зарегистрированного в системе service.amegainform.ru.
       #            NULL - используется имя отправителя по умолчанию.
 
+      # Возвращаемые параметры
+      # sms_id - ид в сервисе шлюза
+      # sms_count - сколько смс потрачено на отправку сообщения
+      # phone - номер куда было отправлено сообщение
+      # Если @errors не пустое то возвращает nil
       def deliver_sms(options = { :sender => nil})
         @options = {
           :action  => "post_sms",
@@ -103,19 +108,25 @@ module ActiveSmsgate #:nodoc:
           :target  => options[:phones],
           :sender  => options[:sender] }
 
-        @response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
-        if @response.code == 200
-          xml = Zlib::GzipReader.new( StringIO.new( @response ) ).read
+        response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
+        if response.code == 200
+          xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
           parse(xml)
-          { :sms => @sms, :messages => @messages, :errors => @errors}
+          if @errors.blank?
+            @messages.map{|x| x.merge({ :sms_id => x[:id],
+                                        :phone => x[:phone],
+                                        :sms_count => x[:sms_res_count]
+                                      })}
+
+          else
+            raise @errors
+          end
         else
-          # @response
-          raise
+          raise response
         end
       rescue
         nil
       end
-
 
 
       # Получение данных и статусов сообщений
@@ -130,7 +141,15 @@ module ActiveSmsgate #:nodoc:
           xml = Zlib::GzipReader.new( StringIO.new( @response ) ).read
           doc = Nokogiri::XML(xml)
           parse(xml)
-          { :sms => @sms, :messages => @messages, :errors => @errors}
+          if @errors.blank?
+            @messages.map{ |msg| msg.merge({
+                                             :sms_id => msg[:sms_id],
+                                             :sms_count => msg[:sms_res_count],
+                                             :phone => msg[:sms_target] }) }
+
+          else
+            raise
+          end
         else
           raise
         end
@@ -138,6 +157,26 @@ module ActiveSmsgate #:nodoc:
         nil
       end
 
+      # Выполнение отправки смс завершено
+      def complete_sms(sms_id)
+        @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
+        @message[:sms_closed].to_i == 1 ? @message : false
+      end
+      alias :complete? :complete
+
+      # Смс досталена
+      def success_sms(sms_id)
+        @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
+        @message[:sms_sent].to_i == 1 ? @message : false
+      end
+      alias :success_sms? :success
+
+      # Смс не доставлена
+      def failure_sms(sms_id)
+        @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
+        @message[:sms_sent].to_i != 1 ? @message : false
+      end
+      alias :failure? :failure
 
       private
 

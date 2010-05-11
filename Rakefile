@@ -13,7 +13,7 @@ begin
     gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
     gem.add_dependency "nokogiri", ">= 1.4.1"
     gem.add_dependency "httparty", ">= 0.5.2"
-    gem.add_dependency "active_resource", ">= 2.3.5"
+    gem.add_dependency "activeresource", ">= 2.3.5"
     gem.files = FileList['lib/**/*.rb']
 
   end

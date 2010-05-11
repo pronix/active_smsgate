@@ -1,7 +1,20 @@
 # -*- coding: utf-8 -*-
 module ActiveSmsgate #:nodoc:
   module Gateway #:nodoc:
+=begin rdoc
+В каждом шлюзе нужно прописать три метода
+  # Выполнение отправки смс завершено
+  def complete;  end
+  alias :complete? :complete
 
+  # Смс досталена
+  def success; end
+  alias :success? :success
+
+  # Смс не доставлена
+  def failure; end
+  alias :failure? :failure
+=end
     class << self
       # Список поддерживаемых
       def support_gateways
@@ -20,7 +33,7 @@ module ActiveSmsgate #:nodoc:
 
     class Gateway
       include HTTParty
-      attr_accessor :login, :password, :use_ssl
+      attr_accessor :login, :password, :use_ssl, :errors
 
       # Initialize a new gateway.
       # ==== Параметры
@@ -46,6 +59,10 @@ module ActiveSmsgate #:nodoc:
       def uri
         self.class.default_options[:base_uri].gsub!(/^https?:\/\//i, '')
         "http#{'s' if use_ssl?}://#{self.class.default_options[:base_uri]}"
+      end
+
+      def valid?
+        @errors.blank?
       end
 
 
