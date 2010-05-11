@@ -162,21 +162,21 @@ module ActiveSmsgate #:nodoc:
         @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
         @message[:sms_closed].to_i == 1 ? @message : false
       end
-      alias :complete? :complete
+      alias :complete_sms? :complete_sms
 
       # Смс досталена
       def success_sms(sms_id)
         @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
         @message[:sms_sent].to_i == 1 ? @message : false
       end
-      alias :success_sms? :success
+      alias :success_sms? :success_sms
 
       # Смс не доставлена
       def failure_sms(sms_id)
         @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
         @message[:sms_sent].to_i != 1 ? @message : false
       end
-      alias :failure? :failure
+      alias :failure_sms? :failure_sms
 
       private
 
