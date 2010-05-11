@@ -145,7 +145,8 @@ module ActiveSmsgate #:nodoc:
             @messages.map{ |msg| msg.merge({
                                              :sms_id => msg[:sms_id],
                                              :sms_count => msg[:sms_res_count],
-                                             :phone => msg[:sms_target] }) }
+                                             :phone => msg[:sms_target] }) }.
+              find{ |x| x[:sms_id] ==  sms_id.to_s }
 
           else
             raise
@@ -159,22 +160,22 @@ module ActiveSmsgate #:nodoc:
 
       # Выполнение отправки смс завершено
       def complete_sms(sms_id)
-        @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
-        @message[:sms_closed].to_i == 1 ? @message : false
+        @message ||= reply_sms(sms_id)
+        true if @message[:sms_closed].to_i == 1
       end
       alias :complete_sms? :complete_sms
 
       # Смс досталена
       def success_sms(sms_id)
-        @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
-        @message[:sms_sent].to_i == 1 ? @message : false
+        @message ||= reply_sms(sms_id)
+        true if @message[:sms_sent].to_i == 1
       end
       alias :success_sms? :success_sms
 
       # Смс не доставлена
       def failure_sms(sms_id)
-        @message ||= reply_sms(sms_id).find{ |x| x[:sms_id] ==  sms_id.to_s }
-        @message[:sms_sent].to_i != 1 ? @message : false
+        @message ||= reply_sms(sms_id)
+        true if @message[:sms_sent].to_i != 1
       end
       alias :failure_sms? :failure_sms
 
