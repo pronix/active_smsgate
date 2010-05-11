@@ -39,15 +39,18 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<thoughtbot-shoulda>, [">= 0"])
       s.add_runtime_dependency(%q<nokogiri>, [">= 1.4.1"])
       s.add_runtime_dependency(%q<httparty>, [">= 0.5.2"])
+      s.add_runtime_dependency(%q<active_resource>, [">= 2.3.5"])
     else
       s.add_dependency(%q<thoughtbot-shoulda>, [">= 0"])
       s.add_dependency(%q<nokogiri>, [">= 1.4.1"])
       s.add_dependency(%q<httparty>, [">= 0.5.2"])
+      s.add_dependency(%q<active_resource>, [">= 2.3.5"])
     end
   else
     s.add_dependency(%q<thoughtbot-shoulda>, [">= 0"])
     s.add_dependency(%q<nokogiri>, [">= 1.4.1"])
     s.add_dependency(%q<httparty>, [">= 0.5.2"])
+    s.add_dependency(%q<active_resource>, [">= 2.3.5"])
   end
 end
 

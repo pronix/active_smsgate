@@ -6,6 +6,7 @@ require 'httparty'
 require 'nokogiri'
 require 'digest'
 require "zlib"
+require 'active_resource'
 
 require "active_smsgate/gateway"
 Dir[File.join(File.dirname(__FILE__), 'active_smsgate','gateways','**','*.rb')].each { |gw| require gw }

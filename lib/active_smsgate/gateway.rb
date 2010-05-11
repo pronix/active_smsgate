@@ -5,8 +5,17 @@ module ActiveSmsgate #:nodoc:
     class << self
       # Список поддерживаемых
       def support_gateways
-        [{:class => 'amegainform',:desc => 'www.amegainform.ru' }]
+        Dir["#{File.dirname(__FILE__)}/gateways/**/*.rb"].map { |gw|
+          gateway = "active_smsgate/gateway/#{File.basename(gw, ".rb")}".classify.constantize
+          { :class => File.basename(gw, ".rb"),  :alias => gateway::ALIAS,
+            :short_desc => gateway::SHORT_DESC, :desc => gateway::DESC}    }
       end
+
+      # получение шлюза по его имени
+      def gateway(gw)
+        "active_smsgate/gateway/#{gw.to_s}".classify.constantize
+      end
+
     end
 
     class Gateway
@@ -32,6 +41,13 @@ module ActiveSmsgate #:nodoc:
 
       # Использовать резервные сервера
       def use_of_backup_server?; @use_of_backup_server  end
+
+      # Получение uri смс сервиса
+      def uri
+        self.class.default_options[:base_uri].gsub!(/^https?:\/\//i, '')
+        "http#{'s' if use_ssl?}://#{self.class.default_options[:base_uri]}"
+      end
+
 
     end
   end
