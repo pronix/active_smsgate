@@ -112,11 +112,11 @@ module ActiveSmsgate #:nodoc:
         if response.code == 200
           xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
           parse(xml)
-          if @errors.blank?
-            @messages.map{|x| x.merge({ :sms_id => x[:id],
-                                        :phone => x[:phone],
-                                        :sms_count => x[:sms_res_count]
-                                      })}
+          unless @errors.blank?
+            @sms.map{|x| x.merge({ :sms_id => x[:id],
+                                   :phone => x[:phone],
+                                   :sms_count => x[:sms_res_count]
+                                 })}
 
           else
             raise @errors
@@ -132,6 +132,11 @@ module ActiveSmsgate #:nodoc:
       # Получение данных и статусов сообщений
       # sms_id - ид смс
 
+      # Возвращаем hash
+      # где обязательно есть
+      # sms_id    - ид в сервисе шлюза
+      # sms_count - кол-во смс потраченное на отправку сообщения
+      # phone     - телефон
 
       def reply_sms(sms_id)
         @options = { :action => "status", :sendtype => "SENDSMS", :sms_id => sms_id }
@@ -141,7 +146,7 @@ module ActiveSmsgate #:nodoc:
           xml = Zlib::GzipReader.new( StringIO.new( @response ) ).read
           doc = Nokogiri::XML(xml)
           parse(xml)
-          if @errors.blank?
+          unless @errors.blank?
             @messages.map{ |msg| msg.merge({
                                              :sms_id => msg[:sms_id],
                                              :sms_count => msg[:sms_res_count],
