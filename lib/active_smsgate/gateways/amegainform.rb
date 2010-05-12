@@ -103,21 +103,16 @@ module ActiveSmsgate #:nodoc:
       # Если @errors не пустое то возвращает nil
       def deliver_sms(options = { :sender => nil})
         @options = {
-          :action  => "post_sms",
-          :message => options[:message],
-          :target  => options[:phones],
-          :sender  => options[:sender] }
+          :action  => "post_sms", :message => options[:message],
+          :target  => options[:phones], :sender  => options[:sender] }
 
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
         if response.code == 200
           xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
           parse(xml)
-          unless @errors.blank?
-            @sms.map{|x| x.merge({ :sms_id => x[:id],
-                                   :phone => x[:phone],
-                                   :sms_count => x[:sms_res_count]
-                                 })}
-
+          if @errors.blank?  # если ошибок нет
+            @sms.map{|x| x.merge({ :sms_id => x[:id], :phone => x[:phone], :sms_count => x[:sms_res_count]
+                                 })}.find{ |x| x[:phone] == options[:phones] }
           else
             raise @errors
           end
@@ -146,13 +141,10 @@ module ActiveSmsgate #:nodoc:
           xml = Zlib::GzipReader.new( StringIO.new( @response ) ).read
           doc = Nokogiri::XML(xml)
           parse(xml)
-          unless @errors.blank?
-            @messages.map{ |msg| msg.merge({
-                                             :sms_id => msg[:sms_id],
-                                             :sms_count => msg[:sms_res_count],
+          if @errors.blank? # если ошибок нет
+            @messages.map{ |msg| msg.merge({ :sms_id => msg[:sms_id],:sms_count => msg[:sms_res_count],
                                              :phone => msg[:sms_target] }) }.
               find{ |x| x[:sms_id] ==  sms_id.to_s }
-
           else
             raise
           end
