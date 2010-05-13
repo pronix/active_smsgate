@@ -70,10 +70,10 @@ module ActiveSmsgate #:nodoc:
       # OVERDRAFT           [максимальных уход в минус]
       # PARENT_DEBT         [задолженность]
       def balance
-        @response = self.class.post("#{uri}/sendsms",
+        response = self.class.post("#{uri}/sendsms",
                                     :query => { :action => "balance"}.merge(auth_options))
-        if @response.code == 200
-          xml = Zlib::GzipReader.new( StringIO.new( @response ) ).read
+        if response.code == 200
+          xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
           doc = Nokogiri::XML(xml)
           {
             :balance =>   (doc.at("//balance//AGT_BALANCE").inner_html rescue 0),
@@ -104,28 +104,30 @@ module ActiveSmsgate #:nodoc:
       def deliver_sms(options = { :sender => nil})
         @options = {
           :action  => "post_sms", :message => options[:message],
-          :target  => options[:phones], :sender  => options[:sender] }
+          :target  => options[:phones],
+          :sender  => options[:sender] }
 
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
+        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         if response.code == 200
-          xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
           parse(xml)
-          if @errors.blank?  # если ошибок нет
-            @sms.map{|x| x.merge({ :sms_id => x[:id], :phone => x[:phone], :sms_count => x[:sms_res_count]
-                                 })}.find{ |x| x[:phone] == options[:phones] }
-          else
-            raise @errors
-          end
+          @sms.map{|x| x.merge({ :sms_group_id => x[:sms_group_id],
+                                 :sms_id => x[:id], :phone => x[:phone], :sms_count => x[:sms_res_count] })}
+
         else
-          raise response
+          raise
         end
       rescue
+        STDERR.puts  " #{$!.inspect} "
+        STDERR.puts  " #{xml} " if xml
         nil
       end
 
 
       # Получение данных и статусов сообщений
       # sms_id - ид смс
+      # type - sms - запрашиваем статус по одному сообщению
+      #      - sms_group - запрашиваем статусы по рассылке
 
       # Возвращаем hash
       # где обязательно есть
@@ -133,26 +135,28 @@ module ActiveSmsgate #:nodoc:
       # sms_count - кол-во смс потраченное на отправку сообщения
       # phone     - телефон
 
-      def reply_sms(sms_id)
-        @options = { :action => "status", :sendtype => "SENDSMS", :sms_id => sms_id }
-        @response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
+      def reply_sms(sms_id, sms_type = :sms)
+        raise unless [:sms, :sms_group].include?(sms_type)
 
-        if @response.code == 200
-          xml = Zlib::GzipReader.new( StringIO.new( @response ) ).read
-          doc = Nokogiri::XML(xml)
+        @options = { :action => "status", :sendtype => "SENDSMS", "#{sms_type}_id" => sms_id }
+        response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
+        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
+        if response.code == 200
           parse(xml)
-          if @errors.blank? # если ошибок нет
+          if sms_type == :sms
             @messages.map{ |msg| msg.merge({ :sms_id => msg[:sms_id],:sms_count => msg[:sms_res_count],
-                                             :phone => msg[:sms_target] }) }.
-              find{ |x| x[:sms_id] ==  sms_id.to_s }
+                                             :phone => msg[:sms_target] }) }.find{ |x| x[:sms_id] ==  sms_id.to_s }
           else
-            raise
+            @messages.map{ |msg| msg.merge({ :sms_id => msg[:sms_id],
+                                             :sms_count => msg[:sms_res_count], :phone => msg[:sms_target] }) }
           end
         else
           raise
         end
       rescue
-        nil
+        STDERR.puts  " #{$!.inspect} "
+        STDERR.puts  " #{xml} " if xml
+        false
       end
 
       # Выполнение отправки смс завершено
