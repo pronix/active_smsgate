@@ -102,13 +102,12 @@ module ActiveSmsgate #:nodoc:
       def deliver_sms(options = { :sender => nil})
         @options = {
           :action  => "post_sms", :message => options[:message],
-          :target  => options[:phones],
-          :sender  => options[:sender] }
+          :target  => options[:phones], :sender  => options[:sender] }
 
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
         xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         if response.code == 200
-          parse(xml) && @sms
+          parse(xml)[:sms]
         else
           raise
         end
@@ -133,11 +132,11 @@ module ActiveSmsgate #:nodoc:
       def reply_sms(sms_id, sms_type = :sms)
         raise unless [:sms, :sms_group].include?(sms_type)
 
-        @options = { :action => "status", :sendtype => "SENDSMS", "#{sms_type}_id" => sms_id }
+        @options = { :action => "status", :sendtype => "SENDSMS", "#{sms_type}_id".to_sym => sms_id }
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
         xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         if response.code == 200
-          parse(xml) && @messages
+          parse(xml)[:messages]
         else
           raise
         end
@@ -164,7 +163,7 @@ module ActiveSmsgate #:nodoc:
           doc.at("//output//result").each { |v,l| hash[v.downcase.to_sym] = l }
           x.each { |v,l| hash[v.downcase.to_sym] = l }
           hash[:text] = x.inner_html
-          ::ResultSms::Result.new(hash.merge({ :sms_id => hash[:id], :sms_count => x[:sms_res_count]}))
+          ResultSms::Result.new(hash.merge({ :sms_id => hash[:id], :sms_count => x[:sms_res_count]}))
         }
 
         # Сообщения о доставках смс
@@ -173,7 +172,7 @@ module ActiveSmsgate #:nodoc:
           hash = { }
           x.each { |v,l| hash[v.downcase.to_sym] = l }
           x.children.each {|n| hash[n.name.downcase.to_sym] = n.inner_html unless n.blank? }
-          ::ResultSms::Message.new(hash.merge({ :phone => hash[:sms_target], :sms_count => hash[:sms_res_count] }))
+          ResultSms::Message.new(hash.merge({ :phone => hash[:sms_target], :sms_count => hash[:sms_res_count] }))
         }
 
         # Сообщения об ошибках
@@ -195,7 +194,7 @@ module ActiveSmsgate #:nodoc:
           alias :failure? :failure
           define_method(:id){ @table[:id] || object_id}
         end
-        class Result  < OpenStruct;
+        class Result  < OpenStruct
           define_method(:id){ @table[:id] || object_id}
         end
       end
