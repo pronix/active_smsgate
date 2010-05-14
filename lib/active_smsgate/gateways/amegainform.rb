@@ -42,9 +42,8 @@ module ActiveSmsgate #:nodoc:
       #              в течение которого было установлено соединение для отправки сообщения.
       # SMS_DTMF_DIGITS - Что пользователь нажимал в сеансе разговора (для SENDVOICE (в разработке))
       # SMS_CLOSE_TIME - Время завершения работы по сообщению.
-
-
 =end
+
     class Amegainform < Gateway
 
       CLASS_ID = 'amegainform'
@@ -56,7 +55,6 @@ module ActiveSmsgate #:nodoc:
       base_uri 'http://service.amega-inform.ru'
 
       # Адреса резервных серверов: service-r1.amegainform.ru и service-r2.amegainform.ru
-
       # Создание нового шлюза  AmegaInformGateway
       # * <tt>:login</tt> -- REQUIRED
       # * <tt>:password</tt> -- REQUIRED
@@ -111,9 +109,6 @@ module ActiveSmsgate #:nodoc:
         xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         if response.code == 200
           parse(xml)
-          @sms.map{|x| x.merge({ :sms_group_id => x[:sms_group_id],
-                                 :sms_id => x[:id], :phone => x[:phone], :sms_count => x[:sms_res_count] })}
-
         else
           raise
         end
@@ -143,13 +138,6 @@ module ActiveSmsgate #:nodoc:
         xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         if response.code == 200
           parse(xml)
-          if sms_type == :sms
-            @messages.map{ |msg| msg.merge({ :sms_id => msg[:sms_id],:sms_count => msg[:sms_res_count],
-                                             :phone => msg[:sms_target] }) }.find{ |x| x[:sms_id] ==  sms_id.to_s }
-          else
-            @messages.map{ |msg| msg.merge({ :sms_id => msg[:sms_id],
-                                             :sms_count => msg[:sms_res_count], :phone => msg[:sms_target] }) }
-          end
         else
           raise
         end
@@ -158,27 +146,6 @@ module ActiveSmsgate #:nodoc:
         STDERR.puts  " #{xml} " if xml
         false
       end
-
-      # Выполнение отправки смс завершено
-      def complete_sms(sms_id)
-        @message ||= reply_sms(sms_id)
-        true if @message[:sms_closed].to_i == 1
-      end
-      alias :complete_sms? :complete_sms
-
-      # Смс досталена
-      def success_sms(sms_id)
-        @message ||= reply_sms(sms_id)
-        true if @message[:sms_sent].to_i == 1
-      end
-      alias :success_sms? :success_sms
-
-      # Смс не доставлена
-      def failure_sms(sms_id)
-        @message ||= reply_sms(sms_id)
-        true if @message[:sms_sent].to_i != 1
-      end
-      alias :failure_sms? :failure_sms
 
       private
 
@@ -189,23 +156,24 @@ module ActiveSmsgate #:nodoc:
       def parse(xml)
         doc = Nokogiri::XML(xml)
         @sms, @messages, @errors = nil, nil, nil
+
         # Ответ от отправка смс
         @sms = doc.at("//output//result") && doc.at("//output//result").
           children.search("//sms").map {|x|
-          _x ={}
-          doc.at("//output//result").each { |v,l| _x[v.downcase.to_sym] = l }
-          x.each { |v,l| _x[v.downcase.to_sym] = l }
-          _x[:text] = x.inner_html
-          _x
+          hash = { }
+          doc.at("//output//result").each { |v,l| hash[v.downcase.to_sym] = l }
+          x.each { |v,l| hash[v.downcase.to_sym] = l }
+          hash[:text] = x.inner_html
+          ::ResultSms::Result.new(hash.merge({ :sms_id => hash[:id], :sms_count => x[:sms_res_count]}))
         }
 
         # Сообщения о доставках смс
         @messages = doc.at("//output//MESSAGES") && doc.at("//output//MESSAGES").
           children.search("//MESSAGE").map { |x|
-          _x = { }
-          x.each { |v,l| _x[v.downcase.to_sym] = l }
-          x.children.each {|n| _x[n.name.downcase.to_sym] = n.inner_html unless n.blank? }
-          _x
+          hash = { }
+          x.each { |v,l| hash[v.downcase.to_sym] = l }
+          x.children.each {|n| hash[n.name.downcase.to_sym] = n.inner_html unless n.blank? }
+          ::ResultSms::Message.new(hash.merge({ :phone => hash[:sms_target], :sms_count => hash[:sms_res_count] }))
         }
 
         # Сообщения об ошибках
@@ -214,6 +182,26 @@ module ActiveSmsgate #:nodoc:
 
         { :sms => @sms, :messages => @messages, :errors => @errors}
       end
+
+      module ResultSms
+        class Message < OpenStruct
+          def complete; true if sms_closed.to_i == 1; end
+          alias :complete? :complete
+
+          def success; true if sms_sent.to_i == 1; end
+          alias :success? :success
+
+          def failure; true unless success?;  end
+          alias :failure? :failure
+          define_method(:id){ @table[:id] || object_id}
+        end
+        class Result  < OpenStruct;
+          define_method(:id){ @table[:id] || object_id}
+        end
+      end
+
     end
   end
 end
+
+
