@@ -108,7 +108,7 @@ module ActiveSmsgate #:nodoc:
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
         xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         if response.code == 200
-          parse(xml)
+          parse(xml) && @sms
         else
           raise
         end
@@ -137,7 +137,7 @@ module ActiveSmsgate #:nodoc:
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
         xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         if response.code == 200
-          parse(xml)
+          parse(xml) && @messages
         else
           raise
         end
