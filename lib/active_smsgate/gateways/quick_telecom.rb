@@ -52,54 +52,23 @@ module ActiveSmsgate #:nodoc:
 
   Данные по сообщению:
 
-    *
       SMS_ID - ID сообщения
-    *
       SMS_GROUP_ID - ID рассылки сообщений
-    *
       SMSTYPE - тип сообщения
-    *
       CREATED - дата и время создания сообщения
-    *
       AUL_USERNAME - Имя пользователя создавшего сообщение
-    *
       AUL_CLIENT_ADR - IP адрес пользователя создавшего сообщение
-    *
       SMS_SENDER - Имя отправителя сообщения
-    *
       SMS_TARGET - Телефон адресата
-    *
       SMS_RES_COUNT - Кол-во единиц ресурсов на данное сообщение
-    *
       SMS_TEXT - Текст сообщения
-    *
       SMSSTC_CODE - Код статуса доставки сообщения
-    *
       SMS_STATUS - Текстовое описание статуса доставки сообщения
-    *
       SMS_CLOSED - [0,1] 0 - сообщения находится в процессинге. 1 = работа по отправке сообщения завершена
-    *
       SMS_SENT - [0,1] 0 - сообщение не отослано. 1 = сообщение отослано успешно
-    *
       SMS_CALL_DURATION - Время, в течение которого было установлено соединение для отправки сообщения.
-    *
       SMS_DTMF_DIGITS - Что пользователь нажимал в сеансе разговора (для SENDVOICE (в разработке))
-    *
       SMS_CLOSE_TIME - Время завершения работы по сообщению.
-
-=end
-    
-=begin rdoc
-   «Амега Информ» – http://amegainform.ru/
-   это сервис  массовой рассылки, приема SMS и голосовых сообщений.
-
-      # Возвращаемые данные
-      # <output>
-      # <result sms_group_id="996">
-      # <sms id="99991" smstype="SENDSMS" phone="+79999999991" sms_res_count="1"><![CDATA[Привет]]></sms>
-      # <sms id="99992" smstype="SENDVOICE" phone="+79999999992" sms_res_count="38"><![CDATA[%PAUSE=1000%%SYNTH=Vika%Привет друг%SAMPLE=#1525%%PAUSE=1000%%SYNTH=Vika%С днём рождения!]]></sms>
-      # </result>
-      # <output>
 
 
       # Возвращаемые данные
@@ -156,14 +125,15 @@ module ActiveSmsgate #:nodoc:
       # PARENT_DEBT         [задолженность]
       def balance
         response = self.class.post("#{uri}",
-                                    :query => { :action => "balance"}.merge(auth_options))
+                                   :query => { :action => "balance"}.merge(auth_options))
         if response.code == 200
-          xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
+          # xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
+          xml = response.body
           doc = Nokogiri::XML(xml)
+
           {
-            :balance =>   (doc.at("//output//AGT_BALANCE").inner_html rescue 0),
-            :debt =>      (doc.at("//output//PARENT_DEBT").inner_html rescue 0),
-            :overdraft => (doc.at("//output//OVERDRAFT").inner_html   rescue 0)
+            :balance =>   (doc.at("//balance//AGT_BALANCE").inner_html rescue 0),
+            :overdraft => (doc.at("//balance//OVERDRAFT").inner_html   rescue 0)
           }
         else
           raise
@@ -192,7 +162,8 @@ module ActiveSmsgate #:nodoc:
           :target  => options[:phones], :sender  => options[:sender] }
 
         response = self.class.post("#{uri}", :query => @options.merge(auth_options))
-        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
+#        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
+        xml = response.body
         if response.code == 200
           parse(xml)[:sms]
         else
@@ -220,11 +191,13 @@ module ActiveSmsgate #:nodoc:
         raise unless [:sms, :sms_group].include?(sms_type)
 
         @options = { :action => "status", :smstype => "SENDSMS", "#{sms_type}_id".to_sym => sms_id }
+
         response = self.class.post("#{uri}", :query => @options.merge(auth_options))
-        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
+#        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
+        xml = response.body
         if response.code == 200
           parse(xml)[:messages]
-        else
+       else
           raise
         end
       rescue
