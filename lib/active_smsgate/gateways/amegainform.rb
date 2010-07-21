@@ -71,7 +71,6 @@ module ActiveSmsgate #:nodoc:
         response = self.class.post("#{uri}/sendsms",
                                    :query => { :action => "balance"}.merge(auth_options))
         if response.code == 200
-          # xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
           xml = response.body
           doc = Nokogiri::XML(xml)
           {
@@ -105,7 +104,6 @@ module ActiveSmsgate #:nodoc:
           :action  => "post_sms", :message => options[:message],
           :target  => options[:phones], :sender  => options[:sender] }
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
-#        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         xml = response.body
 
         if response.code == 200
@@ -136,7 +134,6 @@ module ActiveSmsgate #:nodoc:
 
         @options = { :action => "status", :sendtype => "SENDSMS", "#{sms_type}_id".to_sym => sms_id }
         response = self.class.post("#{uri}/sendsms", :query => @options.merge(auth_options))
-#        xml = Zlib::GzipReader.new( StringIO.new( response ) ).read
         xml = response.body
 
         if response.code == 200
