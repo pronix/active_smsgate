@@ -100,9 +100,9 @@ module ActiveSmsgate #:nodoc:
       # SMS_CLOSE_TIME - Время завершения работы по сообщению.
 =end
 
-    class QuickTelecom < Gateway
+    class Qtelecom < Gateway
 
-      CLASS_ID = 'quick_telecom'
+      CLASS_ID = 'qtelecom'
       ALIAS = 'www.qtelecom.ru'
       SHORT_DESC = 'Шлюз sms рассылок www.qtelecom.ru'
       DESC = "Описание шлюза"
