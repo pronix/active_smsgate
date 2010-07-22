@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{active_smsgate}
-  s.version = "0.0.4"
+  s.version = "0.0.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Pechnikov Maxim"]
@@ -18,7 +18,8 @@ Gem::Specification.new do |s|
   s.files = [
     "lib/active_smsgate.rb",
      "lib/active_smsgate/gateway.rb",
-     "lib/active_smsgate/gateways/amegainform.rb"
+     "lib/active_smsgate/gateways/amegainform.rb",
+     "lib/active_smsgate/gateways/qtelecom.rb"
   ]
   s.homepage = %q{http://github.com/pronix/active_smsgate}
   s.rdoc_options = ["--charset=UTF-8"]
