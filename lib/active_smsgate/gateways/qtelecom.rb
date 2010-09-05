@@ -220,7 +220,7 @@ module ActiveSmsgate #:nodoc:
           doc.at("//output//result").each { |v,l| hash[v.downcase.to_sym] = l }
           x.each { |v,l| hash[v.downcase.to_sym] = l }
           hash[:text] = x.inner_html
-          ResultSms::Result.new(hash.merge({ :sms_id => hash[:id], :sms_count => x[:sms_res_count]}))
+          ResultSms::Result.new(hash.merge({ :sms_id => hash[:id], :sms_count => x[:sms_res_count], :sms_group_id => hash[:send_group_id]}))
         }
 
         # Сообщения о доставках смс
